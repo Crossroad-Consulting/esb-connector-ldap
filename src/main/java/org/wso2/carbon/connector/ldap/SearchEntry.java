@@ -106,7 +106,7 @@ public class SearchEntry extends AbstractConnector {
                         }
                     } else {
 
-                        throw new NamingException("No matching result or entity found for this search");
+                        // throw new NamingException("No matching result or entity found for this search");
                     }
                 } else {
                     entityResult = makeSureOnlyOneMatch(results);
