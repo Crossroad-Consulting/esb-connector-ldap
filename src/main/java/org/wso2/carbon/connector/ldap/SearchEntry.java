@@ -78,7 +78,7 @@ public class SearchEntry extends AbstractConnector {
             String searchFilter = generateSearchFilter(objectClass, filter, messageContext);
             try {
                 NamingEnumeration<SearchResult> results = searchInUserBase(dn, searchFilter, returnAttributes,
-                                                                           searchScope, context, limit);
+                        searchScope, context, limit);
                 SearchResult entityResult;
                 if (!onlyOneReference) {
                     if (results != null && results.hasMore()) {
@@ -104,16 +104,10 @@ public class SearchEntry extends AbstractConnector {
 
                             result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
                         }
-                    } else {
-
-                        // throw new NamingException("No matching result or entity found for this search");
                     }
                 } else {
                     entityResult = makeSureOnlyOneMatch(results);
-                    if (entityResult == null) {
-                        throw new NamingException("Multiple objects for the searched target have been found. Try to " +
-                                "change onlyOneReference option");
-                    } else {
+                    if (entityResult != null) {
                         result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
                     }
                 }
@@ -121,17 +115,18 @@ public class SearchEntry extends AbstractConnector {
                 if (context != null) {
                     context.close();
                 }
-            } catch (NamingException e) { //LDAP Errors are catched
+            } catch (NamingException e) { // LDAP Errors are catched
                 LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.SEARCH_ERROR, e);
                 throw new SynapseException(e);
             }
-        } catch (NamingException e) { //Authentication failures are catched
+        } catch (NamingException e) { // Authentication failures are catched
             LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.INVALID_LDAP_CREDENTIALS, e);
             throw new SynapseException(e);
         }
     }
 
-    private OMElement prepareNode(SearchResult entityResult, OMFactory factory, OMNamespace ns, String returnAttributes[])
+    private OMElement prepareNode(SearchResult entityResult, OMFactory factory, OMNamespace ns,
+            String returnAttributes[])
             throws NamingException {
         Attributes attributes = entityResult.getAttributes();
         Attribute attribute;
@@ -177,7 +172,7 @@ public class SearchEntry extends AbstractConnector {
                         String value = "";
                         if (elementType.equals("class java.lang.String")) {
                             value = (String) element.toString();
-                        } else if(elementType.equals("class [B")) {
+                        } else if (elementType.equals("class [B")) {
                             Attribute attributeValue = attributes.get(returnAttributes[i]);
                             value = new String((byte[]) attributeValue.get());
                         }
@@ -200,12 +195,12 @@ public class SearchEntry extends AbstractConnector {
             // Make sure there is not another item available, there should be only 1 match
             if (results.hasMoreElements()) {
                 // Here the code has matched multiple objects for the searched target
-                return null;
+                throw new NamingException("Multiple objects for the searched target have been found. Try to " +
+                        "change onlyOneReference option");
             }
-            return searchResult;
-        } else {
-            throw new NamingException("Could not find a matching entry for this search");
         }
+
+        return searchResult;
     }
 
     /**
@@ -236,8 +231,8 @@ public class SearchEntry extends AbstractConnector {
     }
 
     private NamingEnumeration<SearchResult> searchInUserBase(String dn, String searchFilter,
-                                                             String[] returningAttributes,
-                                                             int searchScope, DirContext rootContext, int limit)
+            String[] returningAttributes,
+            int searchScope, DirContext rootContext, int limit)
             throws NamingException {
         String userBase = dn;
         SearchControls userSearchControl = new SearchControls();
@@ -275,7 +270,7 @@ public class SearchEntry extends AbstractConnector {
 
     private int getSearchScope(String scope) {
         int searchScope = 2;
-        if(scope != null && !scope.isEmpty()) {
+        if (scope != null && !scope.isEmpty()) {
             if (scope.equalsIgnoreCase("OBJECT")) {
                 searchScope = 0;
             } else if (scope.equalsIgnoreCase("ONE_LEVEL")) {
