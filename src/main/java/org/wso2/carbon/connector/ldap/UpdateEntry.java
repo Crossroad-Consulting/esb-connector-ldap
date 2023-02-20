@@ -58,6 +58,11 @@ public class UpdateEntry extends AbstractConnector {
                     String key = (String) keys.next();
                     String val = object.getString(key);
                     Attribute newAttr = new BasicAttribute(key);
+                    if (key.equalsIgnoreCase("unicodePwd")) {
+                    	newAttr.add(LDAPUtils.encodePassword(val));
+                    } else {
+                    	newAttr.add(val);
+                    } 
                     newAttr.add(val);
                     entry.put(newAttr);
                 }
