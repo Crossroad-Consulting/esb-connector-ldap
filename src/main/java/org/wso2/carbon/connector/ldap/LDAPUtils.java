@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.connector.ldap;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Hashtable;
 import java.util.Iterator;
 
@@ -149,17 +150,4 @@ public class LDAPUtils {
         messageContext.setFaultResponse(true);
         preparePayload(messageContext, e, errorCode);
     }
-
-    public static byte[] encodePassword(String password) {
-		String quotedPassword = "\"" + password + "\"";
-		
-		char[] unicodePwd = quotedPassword.toCharArray();
-		byte[] encodedPwd = new byte[unicodePwd.length * 2];
-		for (int i = 0; i < unicodePwd.length; i++) {
-			encodedPwd[i * 2 + 1] = (byte) (unicodePwd[i] >>> 8);
-			encodedPwd[i * 2 + 0] = (byte) (unicodePwd[i] & 0xff);
-		}
-		
-		return encodedPwd;
-	}
 }

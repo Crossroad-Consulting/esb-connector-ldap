@@ -32,6 +32,8 @@ import org.wso2.carbon.connector.core.ConnectException;
 
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 public class UpdateEntry extends AbstractConnector {
@@ -51,6 +53,7 @@ public class UpdateEntry extends AbstractConnector {
             DirContext context = LDAPUtils.getDirectoryContext(messageContext);
 
             Attributes entry = new BasicAttributes();
+            ModificationItem pwdItem = null;
             if (StringUtils.isNotEmpty(attributesString)) {
                 JSONObject object = new JSONObject(attributesString);
                 Iterator keys = object.keys();
@@ -59,16 +62,18 @@ public class UpdateEntry extends AbstractConnector {
                     String val = object.getString(key);
                     Attribute newAttr = new BasicAttribute(key);
                     if (key.equalsIgnoreCase("unicodePwd")) {
-                    	newAttr.add(LDAPUtils.encodePassword(val));
+                        pwdItem = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(key, ("\""+val+"\"").getBytes(StandardCharsets.UTF_16LE)));
                     } else {
                     	newAttr.add(val);
+                        entry.put(newAttr);
                     } 
-                    newAttr.add(val);
-                    entry.put(newAttr);
                 }
             }
 
             try {
+                if (pwdItem != null) {
+                    context.modifyAttributes(dn, new ModificationItem[]{pwdItem});
+                }
                 if (mode.equals(LDAPConstants.REPLACE)) {
                     context.modifyAttributes(dn, DirContext.REPLACE_ATTRIBUTE, entry);
                 } else if (mode.equals(LDAPConstants.ADD)) {

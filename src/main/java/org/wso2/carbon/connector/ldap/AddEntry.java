@@ -32,6 +32,8 @@ import org.wso2.carbon.connector.core.ConnectException;
 
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 public class AddEntry extends AbstractConnector {
@@ -62,7 +64,7 @@ public class AddEntry extends AbstractConnector {
                     String val = object.getString(key);
                     Attribute newAttr = new BasicAttribute(key);
                     if (key.equalsIgnoreCase("unicodePwd")) {
-                    	newAttr.add(LDAPUtils.encodePassword(val));
+                    	newAttr.add(("\""+val+"\"").getBytes(StandardCharsets.UTF_16LE));
                     } else {
                     	newAttr.add(val);
                     }
