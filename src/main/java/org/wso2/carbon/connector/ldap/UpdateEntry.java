@@ -62,17 +62,20 @@ public class UpdateEntry extends AbstractConnector {
                     String val = object.getString(key);
                     Attribute newAttr = new BasicAttribute(key);
                     if (key.equalsIgnoreCase("unicodePwd")) {
-                        pwdItem = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(key, ("\""+val+"\"").getBytes(StandardCharsets.UTF_16LE)));
+                        pwdItem = new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
+                                new BasicAttribute(key, ("\"" + val + "\"").getBytes(StandardCharsets.UTF_16LE)));
                     } else {
-                    	newAttr.add(val);
+                        if (!mode.equals(LDAPConstants.REMOVE)) {
+                            newAttr.add(val);
+                        }
                         entry.put(newAttr);
-                    } 
+                    }
                 }
             }
 
             try {
                 if (pwdItem != null) {
-                    context.modifyAttributes(dn, new ModificationItem[]{pwdItem});
+                    context.modifyAttributes(dn, new ModificationItem[] { pwdItem });
                 }
                 if (mode.equals(LDAPConstants.REPLACE)) {
                     context.modifyAttributes(dn, DirContext.REPLACE_ATTRIBUTE, entry);
@@ -88,7 +91,7 @@ public class UpdateEntry extends AbstractConnector {
                 LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.UPDATE_ENTRY_ERROR, e);
                 throw new SynapseException(e);
             }
-        } catch (NamingException e) { //Authentication failures are catched
+        } catch (NamingException e) { // Authentication failures are catched
             LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.INVALID_LDAP_CREDENTIALS, e);
             throw new SynapseException(e);
         } catch (JSONException e) {
