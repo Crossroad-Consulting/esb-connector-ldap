@@ -20,6 +20,7 @@ package org.wso2.carbon.connector.ldap;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.PartialResultException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -114,6 +115,16 @@ public class SearchEntry extends AbstractConnector {
                 LDAPUtils.preparePayload(messageContext, result);
                 if (context != null) {
                     context.close();
+                }
+            } catch (PartialResultException e) {
+                if (!dn.contains("OU=")) {
+                    LDAPUtils.preparePayload(messageContext, result);
+                    if (context != null) {
+                        context.close();
+                    }
+                } else {
+                    LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.SEARCH_ERROR, e);
+                    throw new SynapseException(e);
                 }
             } catch (NamingException e) { // LDAP Errors are catched
                 LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.SEARCH_ERROR, e);
