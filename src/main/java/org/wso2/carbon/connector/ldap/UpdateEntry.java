@@ -65,7 +65,7 @@ public class UpdateEntry extends AbstractConnector {
                         pwdItem = new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
                                 new BasicAttribute(key, ("\"" + val + "\"").getBytes(StandardCharsets.UTF_16LE)));
                     } else {
-                        if (!mode.equals(LDAPConstants.REMOVE)) {
+                        if (val != null && val.length() > 0) {
                             newAttr.add(val);
                         }
                         entry.put(newAttr);
