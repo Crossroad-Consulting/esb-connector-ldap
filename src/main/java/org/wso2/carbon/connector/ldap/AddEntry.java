@@ -32,6 +32,8 @@ import org.wso2.carbon.connector.core.ConnectException;
 
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 public class AddEntry extends AbstractConnector {
@@ -61,7 +63,11 @@ public class AddEntry extends AbstractConnector {
                     String key = (String) keys.next();
                     String val = object.getString(key);
                     Attribute newAttr = new BasicAttribute(key);
-                    newAttr.add(val);
+                    if (key.equalsIgnoreCase("unicodePwd")) {
+                    	newAttr.add(("\""+val+"\"").getBytes(StandardCharsets.UTF_16LE));
+                    } else {
+                    	newAttr.add(val);
+                    }
                     entry.put(newAttr);
                 }
             }

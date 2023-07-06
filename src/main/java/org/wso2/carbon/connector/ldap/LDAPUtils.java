@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.connector.ldap;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Hashtable;
 import java.util.Iterator;
 
