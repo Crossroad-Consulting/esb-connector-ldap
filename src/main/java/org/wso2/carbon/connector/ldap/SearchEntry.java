@@ -25,6 +25,10 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
 
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
@@ -39,6 +43,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.wso2.carbon.connector.core.AbstractConnector;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
@@ -74,54 +79,74 @@ public class SearchEntry extends AbstractConnector {
                 LDAPConstants.NAMESPACE);
         OMElement result = factory.createOMElement(LDAPConstants.RESULT, ns);
         try {
-            DirContext context = LDAPUtils.getDirectoryContext(messageContext);
+            LdapContext context = LDAPUtils.getLdapContext(messageContext);
             String searchFilter = generateSearchFilter(objectClass, filter, messageContext);
             try {
-                NamingEnumeration<SearchResult> results = searchInUserBase(dn, searchFilter, returnAttributes,
-                                                                           searchScope, context, limit);
                 SearchResult entityResult;
-                if (!onlyOneReference) {
-                    if (results != null && results.hasMore()) {
-                        while (results.hasMoreElements()) {
-                            entityResult = results.next();
-                            Attributes attributes = entityResult.getAttributes();
-                            if (attributes != null) {
-                                Attribute attribute = attributes.get(LDAPConstants.OBJECT_GUID);
-                                if (attribute != null) {
+                byte[] cookie = null;
+                int pageSize = 3000;
+                context.setRequestControls(new Control[]{
+                            new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                do {
+                    NamingEnumeration<SearchResult> results = searchInUserBase(dn, searchFilter, returnAttributes,
+                                                                           searchScope, context, limit, cookie, pageSize);
+                    if (!onlyOneReference) {
+                        if (results != null && results.hasMore()) {
+                            while (results.hasMoreElements()) {
+                                entityResult = results.next();
+                                Attributes attributes = entityResult.getAttributes();
+                                if (attributes != null) {
+                                    Attribute attribute = attributes.get(LDAPConstants.OBJECT_GUID);
+                                    if (attribute != null) {
 
-                                    Object attObject = attribute.get(0);
-                                    final byte[] bytes = (byte[]) attObject;
+                                        Object attObject = attribute.get(0);
+                                        final byte[] bytes = (byte[]) attObject;
 
-                                    // https://community.oracle.com/thread/1157698
-                                    // Represent objectGUID in UUID
-                                    if (bytes.length == 16) {
-                                        final ByteBuffer bb = ByteBuffer.wrap(swapBytes(bytes));
-                                        String attr = new java.util.UUID(bb.getLong(), bb.getLong()).toString();
-                                        entityResult.getAttributes().put(LDAPConstants.OBJECT_GUID, attr);
+                                        // https://community.oracle.com/thread/1157698
+                                        // Represent objectGUID in UUID
+                                        if (bytes.length == 16) {
+                                            final ByteBuffer bb = ByteBuffer.wrap(swapBytes(bytes));
+                                            String attr = new java.util.UUID(bb.getLong(), bb.getLong()).toString();
+                                            entityResult.getAttributes().put(LDAPConstants.OBJECT_GUID, attr);
+                                        }
                                     }
                                 }
-                            }
 
+                                result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
+                            }
+                        } else {
+
+                            throw new NamingException("No matching result or entity found for this search");
+                        }
+                        // Examine the paged results control response
+                        Control[] controls = context.getResponseControls();
+                        if (controls != null) {
+                            for (int i = 0; i < controls.length; i++) {
+                                if (controls[i] instanceof PagedResultsResponseControl) {
+                                    PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl)controls[i];
+                                    cookie = prrc.getCookie();
+                                }
+                            }
+                        }
+                        // Re-activate paged results
+                        context.setRequestControls(new Control[]{
+                            new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                    } else {
+                        entityResult = makeSureOnlyOneMatch(results);
+                        if (entityResult == null) {
+                            throw new NamingException("Multiple objects for the searched target have been found. Try to " +
+                                    "change onlyOneReference option");
+                        } else {
                             result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
                         }
-                    } else {
-
-                        throw new NamingException("No matching result or entity found for this search");
                     }
-                } else {
-                    entityResult = makeSureOnlyOneMatch(results);
-                    if (entityResult == null) {
-                        throw new NamingException("Multiple objects for the searched target have been found. Try to " +
-                                "change onlyOneReference option");
-                    } else {
-                        result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
-                    }
-                }
+                } while (cookie != null);
                 LDAPUtils.preparePayload(messageContext, result);
                 if (context != null) {
                     context.close();
                 }
-            } catch (NamingException e) { //LDAP Errors are catched
+            } catch (NamingException | IOException e) { //LDAP Errors are catched
                 LDAPUtils.handleErrorResponse(messageContext, LDAPConstants.ErrorConstants.SEARCH_ERROR, e);
                 throw new SynapseException(e);
             }
@@ -237,7 +262,7 @@ public class SearchEntry extends AbstractConnector {
 
     private NamingEnumeration<SearchResult> searchInUserBase(String dn, String searchFilter,
                                                              String[] returningAttributes,
-                                                             int searchScope, DirContext rootContext, int limit)
+                                                             int searchScope, DirContext rootContext, int limit, byte[] cookie, int pageSize)
             throws NamingException {
         String userBase = dn;
         SearchControls userSearchControl = new SearchControls();

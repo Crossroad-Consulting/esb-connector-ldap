@@ -46,7 +46,7 @@ public class AddEntry extends AbstractConnector {
         OMElement result = factory.createOMElement(LDAPConstants.RESULT, ns);
         OMElement message = factory.createOMElement(LDAPConstants.MESSAGE, ns);
         try {
-            DirContext context = LDAPUtils.getDirectoryContext(messageContext);
+            DirContext context = LDAPUtils.getLdapContext(messageContext);
             String classes[] = objectClass.split(",");
             Attributes entry = new BasicAttributes();
             Attribute obClassAttr = new BasicAttribute(LDAPConstants.OBJECT_CLASS);

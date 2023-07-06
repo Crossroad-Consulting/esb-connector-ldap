@@ -43,7 +43,7 @@ public class Rename extends AbstractConnector {
         OMElement message = factory.createOMElement(LDAPConstants.MESSAGE, ns);
 
         try {
-            DirContext context = LDAPUtils.getDirectoryContext(messageContext);
+            DirContext context = LDAPUtils.getLdapContext(messageContext);
             context.rename(oldName, newName);
             message.setText(LDAPConstants.SUCCESS);
             result.addChild(message);

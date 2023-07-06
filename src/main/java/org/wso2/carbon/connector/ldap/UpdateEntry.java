@@ -48,7 +48,7 @@ public class UpdateEntry extends AbstractConnector {
         OMElement message = factory.createOMElement(LDAPConstants.MESSAGE, ns);
 
         try {
-            DirContext context = LDAPUtils.getDirectoryContext(messageContext);
+            DirContext context = LDAPUtils.getLdapContext(messageContext);
 
             Attributes entry = new BasicAttributes();
             if (StringUtils.isNotEmpty(attributesString)) {
