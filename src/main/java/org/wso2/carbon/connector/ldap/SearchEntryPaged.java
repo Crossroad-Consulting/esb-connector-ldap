@@ -115,9 +115,6 @@ public class SearchEntryPaged extends AbstractConnector {
 
                                 result.addChild(prepareNode(entityResult, factory, ns, returnAttributes));
                             }
-                        } else {
-
-                            throw new NamingException("No matching result or entity found for this search");
                         }
                         // Examine the paged results control response
                         Control[] controls = context.getResponseControls();
