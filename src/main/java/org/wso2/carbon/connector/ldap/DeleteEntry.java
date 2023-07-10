@@ -43,7 +43,7 @@ public class DeleteEntry extends AbstractConnector {
         OMElement message = factory.createOMElement(LDAPConstants.MESSAGE, ns);
 
         try {
-            DirContext context = LDAPUtils.getDirectoryContext(messageContext);
+            DirContext context = LDAPUtils.getLdapContext(messageContext);
             try {
                 Attributes matchingAttributes = new BasicAttributes();
                 //search for the existance of dn

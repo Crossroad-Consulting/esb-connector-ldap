@@ -24,8 +24,8 @@ import java.util.Iterator;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
 
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
@@ -45,7 +45,7 @@ public class LDAPUtils {
     protected static Log log = LogFactory.getLog(LDAPUtils.class);
     private static OMNamespace ns = fac.createOMNamespace(LDAPConstants.CONNECTOR_NAMESPACE, LDAPConstants.NAMESPACE);
 
-    protected static DirContext getDirectoryContext(MessageContext messageContext)
+    protected static LdapContext getLdapContext(MessageContext messageContext)
             throws NamingException {
         String providerUrl = LDAPUtils.lookupContextParams(messageContext, LDAPConstants.PROVIDER_URL);
         String securityPrincipal = LDAPUtils.lookupContextParams(messageContext, LDAPConstants.SECURITY_PRINCIPAL);
@@ -94,8 +94,8 @@ public class LDAPUtils {
             }
         }
 
-        DirContext ctx = null;
-        ctx = new InitialDirContext(env);
+        LdapContext ctx = null;
+        ctx = new InitialLdapContext(env, null);
         return ctx;
     }
 

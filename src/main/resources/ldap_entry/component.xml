@@ -26,6 +26,10 @@
             <file>searchEntry.xml</file>
             <description>This searches entries in ldap directory</description>
         </component>
+        <component name="searchEntryPaged">
+            <file>searchEntryPaged.xml</file>
+            <description>This searches entries in ldap directory with paging</description>
+        </component>
         <component name="updateEntry">
             <file>updateEntry.xml</file>
             <description>This updates entries in ldap directory</description>
