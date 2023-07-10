@@ -38,6 +38,6 @@
         <property expression="$func:attributes" name="attributes" scope="default" type="STRING"/>
         <property expression="$func:limit" name="limit" scope="default" type="STRING"/>
 
-        <class name="org.wso2.carbon.connector.ldap.SearchEntry"/>
+        <class name="org.wso2.carbon.connector.ldap.SearchEntryPaged"/>
     </sequence>
 </template>
